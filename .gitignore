@@ -1,3 +1,5 @@
 */.pioenvs
 */.piolibdeps
 */.vscode/c_cpp_properties.json
+arduino-sensors/.vscode/c_cpp_properties.json
+arduino-sensors/.vscode/launch.json
