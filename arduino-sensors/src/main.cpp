@@ -68,7 +68,7 @@ void defineColor(int humidity_sensor_value)
 
 void waterBombBehavior(int humidity_sensor_value)
 {
-    if(humidity_sensor_value < 50)
+    if(humidity_sensor_value < 150)
     {
 
         digitalWrite(WATER, HIGH);
@@ -76,7 +76,7 @@ void waterBombBehavior(int humidity_sensor_value)
         while(true)
         {
             humidity_sensor_value = readHumiditySensor();
-            if(humidity_sensor_value > 200)
+            if(humidity_sensor_value > 500)
             {break;}
             delay(300);
         }

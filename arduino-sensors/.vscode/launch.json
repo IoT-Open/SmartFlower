@@ -6,8 +6,8 @@
             "request": "launch",
             "cwd": "${workspaceRoot}",
             "name": "PlatformIO Debugger",
-            "target": "/Users/anon/Projects/SmartFlower/arduino-sensors/.pioenvs/nanoatmega328/firmware.elf",
-            "gdbpath": "/Users/anon/.platformio/penv/bin/piodebuggdb",
+            "target": "/home/jonatas.freitas/Projects/tdc_2017/SmartFlower/arduino-sensors/.pioenvs/nanoatmega328/firmware.elf",
+            "gdbpath": "/home/jonatas.freitas/.platformio/penv/bin/piodebuggdb",
             "autorun": [ "source .pioinit" ]
         }
     ]
