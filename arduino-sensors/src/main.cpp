@@ -1,28 +1,40 @@
 #include <ArduinoJson.h>
 #include <dht.h>
 
-dht DHT;
+int DELAY = 30; //in seconds
 
+dht DHT;
 int DHT11_PIN = 2;
 int DHT11_VCC = 3;
 
-int led_out = 13;
+byte HUMDITY_SENSOR = A0;
+byte HUMDITY_SENSOR_VCC = 6;
 
-byte humidity_sensor_pin = A0;
-byte humidity_sensor_vcc = 6;
+int WATER = 7;
 
-int water_bomb = 7;
+int LED_RED = 9;
+int LED_GREEN = 10;
+int LED_BLUE = 8;
 
-int greenPin = 10;
-int redPin = 9;
-int bluePin = 8;
-
-int read_humidity_sensor()
+void readDHT11Sensor()
 {
-    digitalWrite(humidity_sensor_vcc, HIGH);
+    digitalWrite(DHT11_VCC, HIGH);
+    
     delay(500);
-    int value = analogRead(humidity_sensor_pin);
-    digitalWrite(humidity_sensor_vcc, LOW);
+    int chk = DHT.read11(DHT11_PIN);
+
+    digitalWrite(DHT11_VCC, LOW);
+}
+
+int readHumiditySensor()
+{
+    digitalWrite(HUMDITY_SENSOR_VCC, HIGH);
+    
+    delay(500);
+
+    int value = analogRead(HUMDITY_SENSOR);
+    digitalWrite(HUMDITY_SENSOR_VCC, LOW);
+
     return 1003 - value;
 }
 
@@ -36,79 +48,88 @@ void setColor(int red, int green, int blue)
     blue = 255 - blue;
     #endif
 
-    analogWrite(redPin, red);
-    analogWrite(greenPin, green);
-    analogWrite(bluePin, blue);
+    analogWrite(LED_RED, red);
+    analogWrite(LED_GREEN, green);
+    analogWrite(LED_BLUE, blue);
 
+}
+
+void defineColor(int humidity_sensor_value)
+{
+
+    if (humidity_sensor_value >= 200) 
+    { setColor(0, 255, 0); }
+    else if (humidity_sensor_value > 50 && humidity_sensor_value < 200) 
+    { setColor(0, 0, 255); }
+    else
+    { setColor(255, 0, 0); }
+
+}
+
+void waterBombBehavior(int humidity_sensor_value)
+{
+    if(humidity_sensor_value < 50)
+    {
+
+        digitalWrite(WATER, HIGH);
+
+        while(true)
+        {
+            humidity_sensor_value = readHumiditySensor();
+            if(humidity_sensor_value > 200)
+            {break;}
+            delay(300);
+        }
+
+        digitalWrite(WATER, LOW);
+
+    }
+}
+
+String formatJson(int humidity_sensor_value, int temperature, int air_humidity)
+{
+    StaticJsonBuffer<200> jsonBuffer;
+    JsonObject &root = jsonBuffer.createObject();
+
+    root["solo_humidity"] = humidity_sensor_value;
+    root["temperature"] = temperature;
+    root["air_humidity"] = air_humidity;
+
+    String json_output;
+    root.printTo(json_output);
+
+    return json_output;
 }
 
 void setup()
 {
-    pinMode(humidity_sensor_vcc, OUTPUT);
+    
     pinMode(DHT11_VCC, OUTPUT);
-    pinMode(led_out, OUTPUT);
-    pinMode(water_bomb, OUTPUT);
-
-    digitalWrite(humidity_sensor_vcc, LOW);
+    pinMode(WATER, OUTPUT);
+    pinMode(HUMDITY_SENSOR_VCC, OUTPUT);
 
     while (!Serial);
     delay(1000);
     Serial.begin(9600);
+
 }
 
 void loop()
 {
 
-    digitalWrite(DHT11_VCC, HIGH);
-    delay(500);
-    int chk = DHT.read11(DHT11_PIN);
-    digitalWrite(DHT11_VCC, LOW);
+    int humidity_sensor_value = readHumiditySensor();
 
-    int solo_humidity = read_humidity_sensor();
-
+    readDHT11Sensor();
     float temperature = DHT.temperature;
     float air_humidity = DHT.humidity;
 
-    StaticJsonBuffer<200> jsonBuffer;
-    JsonObject &root = jsonBuffer.createObject();
-
-    root["solo_humidity"] = solo_humidity;
-    root["temperature"] = temperature;
-    root["air_humidity"] = air_humidity;
-
-    String json_output;
-
-    root.printTo(json_output);
-
+    String json_output = formatJson(humidity_sensor_value, temperature, air_humidity);
+    
     Serial.println(json_output);
 
-    if (solo_humidity >= 200)
-        setColor(0, 255, 0);
-    else if (solo_humidity > 50 && solo_humidity < 200)
-        setColor(0, 0, 255);
-    else
-        setColor(255, 0, 0);
-
-    if(solo_humidity < 50)
-    {
-
-        digitalWrite(water_bomb, HIGH);
-
-        while(true)
-        {
-            solo_humidity = read_humidity_sensor();
-            if(solo_humidity > 200)
-            {break;}
-            delay(300);
-        }
-
-        digitalWrite(water_bomb, LOW);
-
-    }
+    defineColor(humidity_sensor_value);
+    waterBombBehavior(humidity_sensor_value);
         
-    digitalWrite(led_out, HIGH);
-    delay(500);
-    digitalWrite(led_out, LOW);
-    delay(500);
+    delay(DELAY * 1000);
 
 }
